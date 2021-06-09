@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const getData = async () => {
+const getTodaysGame = async () => {
 	return await axios
 		.get('https://www.espn.com/mlb/schedule')
 		.then(res => {
@@ -13,14 +13,6 @@ const getData = async () => {
 					const rowHTML = row.split('<span>');
 					const awayTeam = rowHTML[1].split('</span>')[0];
 					const homeTeam = rowHTML[2].split('</span>')[0];
-					const time = rowHTML[2]
-						.split('data-date=')[1]
-						.split('>')[0]
-						.replace(/"/g, '');
-
-					const network = rowHTML[2]
-						.split('<td class="network">')[1]
-						.split('<')[0];
 
 					const awayStarter = rowHTML[2]
 						.split('/mlb/player')[1]
@@ -32,25 +24,40 @@ const getData = async () => {
 						.split('>')[1]
 						.split('</a')[0];
 
+					let date = rowHTML[2].split('data-date=')[1]
+						? new Date(
+								rowHTML[2]
+									.split('data-date=')[1]
+									.split('><')[0]
+									.replace(/"/g, '')
+						  )
+						: 'live';
+
 					return {
 						home: { team: homeTeam, starter: homeStarter },
 						away: { team: awayTeam, starter: awayStarter },
-						time: time,
-						network: network
+						time: date
 					};
 				});
 		})
 		.catch(err => console.log(err));
 };
 
-const getGameStats = async () => {
+const init = async () => {
 	try {
-		const gameData = await getData();
-		console.table(gameData);
+		const gameData = await getTodaysGame();
+		const rawDate = new Date(Date.now());
+
+		const result = {
+			date: rawDate,
+			games: gameData
+		};
+
+		console.log(result);
 	} catch (err) {
 		console.log(err);
 		process.exit(1);
 	}
 };
 
-getGameStats();
+init();
